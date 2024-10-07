@@ -1,40 +1,18 @@
-{
-  "walks": [
-    {
-      "id": 1,
-      "name": "River Walk",
-      "distance": 5.5,
-      "duration": "2 hours",
-      "difficulty": "Easy",
-      "description": "A scenic walk along the river with beautiful views.",
-      "location": {
-        "latitude": -36.8485,
-        "longitude": 174.7633
-      }
-    },
-    {
-      "id": 2,
-      "name": "Mountain Trail",
-      "distance": 10.2,
-      "duration": "4 hours",
-      "difficulty": "Moderate",
-      "description": "A challenging trail through the mountains.",
-      "location": {
-        "latitude": -37.814,
-        "longitude": 144.96332
-      }
-    },
-    {
-      "id": 3,
-      "name": "Forest Loop",
-      "distance": 3.8,
-      "duration": "1 hour",
-      "difficulty": "Easy",
-      "description": "A peaceful walk through the forest.",
-      "location": {
-        "latitude": -36.8661,
-        "longitude": 174.7008
-      }
-    }
-  ]
-}
+[
+  {
+    "Name": "Morning Walk",
+    "Distance": 3.2
+  },
+  {
+    "Name": "Evening Walk",
+    "Distance": 5.5
+  },
+  {
+    "Name": "Evening Walk",
+    "Distance": 6.5
+  },
+  {
+    "Name": "Evening Walk",
+    "Distance": 7.5
+  }
+]
