@@ -14,36 +14,48 @@ namespace Test3
         {
             List<T> resultList = new List<T>();
 
-            // Remove the brackets and split by "},{"
-            json = json.Trim('[', ']'); // Removing the array brackets
+            // Clean up the JSON to make parsing easier (remove unnecessary whitespace and new lines)
+            json = json.Replace("\r", "").Replace("\n", "").Trim('[', ']');
+            
             string[] entries = json.Split(new string[] { "},{" }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var entry in entries)
             {
-                // Create a new instance of T (generic model)
-                T obj = new T();
+                // Add curly braces back to the entry if they were removed during splitting
+                string cleanedEntry = "{" + entry.Trim('{', '}') + "}";
 
-                // Clean up the entry
-                string cleanedEntry = entry.Replace("{", "").Replace("}", "").Trim();
-
-                // Split the entry by commas to get the key-value pairs
-                string[] keyValuePairs = cleanedEntry.Split(',');
-
-                foreach (var pair in keyValuePairs)
-                {
-                    // Split each pair by colon (":") to get the key and value
-                    string[] keyValue = pair.Split(':');
-                    string key = keyValue[0].Trim(' ', '"'); // Remove spaces and quotes from key
-                    string value = keyValue[1].Trim(' ', '"'); // Remove spaces and quotes from value
-
-                    // Use reflection to map the JSON key to the class property
-                    SetPropertyValue(obj, key, value);
-                }
+                // Parse the cleaned entry into an object of type T
+                T obj = ParseSingleObject<T>(cleanedEntry);
 
                 resultList.Add(obj);
             }
 
             return resultList;
+        }
+
+        // Method to parse a single JSON object into an instance of T
+        private static T ParseSingleObject<T>(string json) where T : new()
+        {
+            T obj = new T();
+
+            // Remove curly braces and split the JSON into key-value pairs
+            string[] keyValuePairs = json.Trim('{', '}').Split(new string[] { "\",\"", "\":\"", "\", \"" }, StringSplitOptions.None);
+
+            foreach (var pair in keyValuePairs)
+            {
+                // Each key-value pair is split by ":"
+                string[] keyValue = pair.Split(new char[] { ':' }, 2);
+                if (keyValue.Length == 2)
+                {
+                    string key = keyValue[0].Trim(' ', '"');  // Remove spaces and quotes from key
+                    string value = keyValue[1].Trim(' ', '"');  // Remove spaces and quotes from value
+
+                    // Use reflection to map the JSON key to the class property
+                    SetPropertyValue(obj, key, value);
+                }
+            }
+
+            return obj;
         }
 
         // Method to set the property value using reflection
@@ -61,11 +73,17 @@ namespace Test3
                     // Set the value of the property based on its type
                     if (prop.PropertyType == typeof(int))
                     {
-                        prop.SetValue(obj, int.Parse(value));
+                        if (int.TryParse(value, out int intValue))
+                        {
+                            prop.SetValue(obj, intValue);
+                        }
                     }
                     else if (prop.PropertyType == typeof(double))
                     {
-                        prop.SetValue(obj, double.Parse(value));
+                        if (double.TryParse(value, out double doubleValue))
+                        {
+                            prop.SetValue(obj, doubleValue);
+                        }
                     }
                     else
                     {

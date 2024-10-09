@@ -14,6 +14,7 @@ namespace Test3
 
 
 
+            // Use the generic parser to parse the JSON into a list of Walks
             List<Walks> walksList = GenericJsonParser.ParseJson<Walks>(json);
 
             // Print the parsed data
