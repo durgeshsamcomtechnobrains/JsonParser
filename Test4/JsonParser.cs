@@ -10,18 +10,19 @@ namespace Test4
     {
         public List<T> Parse<T>(string json) where T : new()
         {
-            // Remove whitespace and handle basic structure
-            json = json.Trim();
-
-            // Remove the square brackets from the JSON array
+            // Check for the array structure and remove unnecessary characters
             if (json.StartsWith("[") && json.EndsWith("]"))
             {
                 json = json[1..^1]; // Trim the first and last character
             }
+            else if (json.Contains("\"") && !json.StartsWith("{") && !json.EndsWith("}"))
+            {
+                throw new ArgumentException("Invalid JSON format: Expected an array.");
+            }
 
             List<T> list = new List<T>();
 
-            // Split the JSON string by commas to get individual objects
+            // Split the JSON string by "},{" to get individual objects
             string[] jsonObjects = json.Split(new[] { "},{" }, StringSplitOptions.None);
 
             foreach (var jsonObject in jsonObjects)
@@ -38,9 +39,12 @@ namespace Test4
                     string propertyName = property.Name.ToLower();
                     string valueString = GetValueFromJson(jsonObjectWithBraces, propertyName);
 
-                    // Type casting
-                    object value = Convert.ChangeType(valueString, property.PropertyType);
-                    property.SetValue(obj, value);
+                    if (!string.IsNullOrEmpty(valueString))
+                    {
+                        // Type casting
+                        object value = Convert.ChangeType(valueString, property.PropertyType);
+                        property.SetValue(obj, value);
+                    }
                 }
 
                 list.Add(obj);
