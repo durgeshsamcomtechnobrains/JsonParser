@@ -1,109 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Test4
 {
     public class JsonParser
     {
         public List<T> Parse<T>(string json) where T : new()
-        {
-            json = json.Trim();
-
-            // Check for JSON array or single object
+        {            
+            // Check for the array structure and remove unnecessary characters
             if (json.StartsWith("[") && json.EndsWith("]"))
             {
-                return ParseArray<T>(json);
+                json = json[1..^1]; // Trim the first and last character
             }
-            else if (json.StartsWith("{") && json.EndsWith("}"))
+            else if (json.Contains("\"") && !json.StartsWith("{") && !json.EndsWith("}"))
             {
-                T obj = ParseJsonObject<T>(json);                
-                return new List<T> { obj }; // Return a list containing a single object
+                throw new ArgumentException("Invalid JSON format: Expected an array.");
             }
-            else
+
+            List<T> list = new List<T>();
+            
+            // Split the JSON string by "},{" to get individual objects
+            string[] jsonObjects = json.Split(new[] { "},{" }, StringSplitOptions.None);
+
+            foreach (var jsonObject in jsonObjects)
             {
-                throw new ArgumentException("Invalid JSON format. Expected a JSON array or object.");
-            }
-        }
+                // Ensure to wrap the object again to make it a valid JSON object
+                string jsonObjectWithBraces = "{" + jsonObject.Trim().TrimStart('{').TrimEnd('}') + "}";
 
-        private T ParseJsonObject<T>(string json) where T : new()        
-        {
-            T obj = new T();
-            var properties = typeof(T).GetProperties();
+                T obj = new T();
+                var properties = typeof(T).GetProperties();
 
-            var dict = ParseJsonToDictionary(json);
-
-            foreach (var property in properties)
-            {
-                string jsonKey = property.Name; // Use property name directly (case-sensitive)
-                if (dict.ContainsKey(jsonKey))
+                foreach (var property in properties)
                 {
-                    var value = dict[jsonKey];
-                    SetPropertyValue(obj, property, value);
+                    // Find the value for each property
+                    string propertyName = property.Name.ToLower();
+                    string valueString = GetValueFromJson(jsonObjectWithBraces, propertyName);
+
+                    if (!string.IsNullOrEmpty(valueString))
+                    {
+                        // Type casting
+                        object value = Convert.ChangeType(valueString, property.PropertyType);
+                        property.SetValue(obj, value);
+                    }
                 }
+
+                list.Add(obj);
             }
 
-            return obj;
+            return list;
         }
 
-        private List<T> ParseArray<T>(string json) where T : new()
+        private string GetValueFromJson(string jsonObject, string propertyName)
         {
-            json = json.TrimStart('[').TrimEnd(']');
-            var elements = new List<T>();
-            string[] arrayItems = json.Split(new[] { "},{" }, StringSplitOptions.None);
+            string searchString = $"\"{propertyName}\"";
+            int startIndex = jsonObject.IndexOf(searchString, StringComparison.OrdinalIgnoreCase);
 
-            foreach (var item in arrayItems)
-            {
-                var formattedItem = "{" + item.TrimStart('{').TrimEnd('}') + "}";
-                elements.Add(ParseJsonObject<T>(formattedItem));
-            }
+            if (startIndex < 0) return null;
 
-            return elements;
-        }
+            // Find the start of the value
+            startIndex += searchString.Length + 1; // Skip to the start of the value
+            int endIndex = jsonObject.IndexOfAny(new[] { ',', '}' }, startIndex);
 
-        private Dictionary<string, object> ParseJsonToDictionary(string json)
-        {
-            var dict = new Dictionary<string, object>();
-
-            // Assume a simple flat key-value JSON object
-            string[] keyValuePairs = json.TrimStart('{').TrimEnd('}').Split(',');
-
-            foreach (var kvp in keyValuePairs)
-            {
-                var pair = kvp.Split(':');
-                if (pair.Length == 2)
-                {
-                    string key = pair[0].Trim().Trim('\"');
-                    string value = pair[1].Trim().Trim('\"');
-                    dict[key] = value;
-                }
-            }
-
-            return dict;
-        }
-
-        private void SetPropertyValue(object obj, PropertyInfo property, object value)
-        {
-            if (value == null) return;
-
-            try
-            {
-                // Check property type and assign value accordingly
-                if (property.PropertyType == typeof(int))
-                    property.SetValue(obj, int.Parse(value.ToString()));
-                else if (property.PropertyType == typeof(decimal))
-                    property.SetValue(obj, decimal.Parse(value.ToString()));
-                else if (property.PropertyType == typeof(bool))
-                    property.SetValue(obj, bool.Parse(value.ToString()));
-                else if (property.PropertyType == typeof(double))
-                    property.SetValue(obj, double.Parse(value.ToString()));
-                else
-                    property.SetValue(obj, value.ToString());
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error setting property '{property.Name}': {ex.Message}");
-            }
+            // Extract the value string
+            return jsonObject[startIndex..endIndex].Trim().Trim('\"');
         }
     }
 }
