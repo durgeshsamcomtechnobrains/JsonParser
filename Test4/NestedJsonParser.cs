@@ -66,12 +66,51 @@ namespace Test4
                     string key = pair.Substring(0, colonIndex).Trim().Trim('"');
                     string value = pair.Substring(colonIndex + 1).Trim();
 
-                    // Handle nested objects
+                    // Detect and handle nested objects
                     if (value.StartsWith("{") && value.EndsWith("}"))
                     {
-                        // Recursive call to handle nested objects like Rating
-                        var nestedObject = CreateObjectFromJson<object>(value);
-                        SetProperty(obj, key, nestedObject);
+                        // Get the property type dynamically
+                        var property = typeof(T).GetProperty(key);
+                        if (property != null)
+                        {
+                            // Recursively parse nested objects
+                            var nestedObject = CreateObjectFromJson(Activator.CreateInstance(property.PropertyType), value);
+                            SetProperty(obj, key, nestedObject);
+                        }
+                    }
+                    else
+                    {
+                        value = value.Trim('"');
+                        SetProperty(obj, key, value);
+                    }
+                }
+            }
+
+            return obj;
+        }
+
+        private object CreateObjectFromJson(object obj, string jsonObject)
+        {
+            jsonObject = jsonObject.Trim('{', '}');
+            string[] keyValuePairs = SplitKeyValuePairs(jsonObject);
+
+            foreach (var pair in keyValuePairs)
+            {
+                int colonIndex = pair.IndexOf(':');
+                if (colonIndex >= 0)
+                {
+                    string key = pair.Substring(0, colonIndex).Trim().Trim('"');
+                    string value = pair.Substring(colonIndex + 1).Trim();
+
+                    // Detect and handle nested objects recursively
+                    if (value.StartsWith("{") && value.EndsWith("}"))
+                    {
+                        var property = obj.GetType().GetProperty(key);
+                        if (property != null)
+                        {
+                            var nestedObject = CreateObjectFromJson(Activator.CreateInstance(property.PropertyType), value);
+                            SetProperty(obj, key, nestedObject);
+                        }
                     }
                     else
                     {
@@ -134,9 +173,16 @@ namespace Test4
             {
                 try
                 {
-                    // Convert value to appropriate type and set the property
-                    object convertedValue = Convert.ChangeType(value, property.PropertyType);
-                    property.SetValue(obj, convertedValue);
+                    // Convert value to appropriate type or assign the nested object directly
+                    if (property.PropertyType.IsClass && property.PropertyType != typeof(string))
+                    {
+                        property.SetValue(obj, value);
+                    }
+                    else
+                    {
+                        object convertedValue = Convert.ChangeType(value, property.PropertyType);
+                        property.SetValue(obj, convertedValue);
+                    }
                 }
                 catch
                 {
@@ -144,5 +190,6 @@ namespace Test4
                 }
             }
         }
+
     }
 }
