@@ -69,13 +69,12 @@ namespace Test4
                     // Detect and handle nested objects
                     if (value.StartsWith("{") && value.EndsWith("}"))
                     {
-                        // Get the property type dynamically
+                        // Handle nested objects like 'rating'
                         var property = typeof(T).GetProperty(key);
                         if (property != null)
                         {
-                            // Recursively parse nested objects
                             var nestedObject = CreateObjectFromJson(Activator.CreateInstance(property.PropertyType), value);
-                            SetProperty(obj, key, nestedObject);
+                            property.SetValue(obj, nestedObject);
                         }
                     }
                     else
