@@ -8,23 +8,21 @@ namespace Test4
         {
             string path = @"D:\DotNetTeamBackup\Durgesh\MAUI Learning\JSON_Parser\JsonParser\Test4\test2.json";
             string json = File.ReadAllText(path);
-            JsonParser parser = new JsonParser();
+            NewJsonParser parser = new NewJsonParser();
             var products = parser.Parse<Product>(json);
-            
-            //JsonParser parser = new JsonParser();
-            //List<Walk> walksList = parser.Parse<Walk>(walksJson);            
 
             foreach (var product in products)
             {
-                Console.WriteLine($"Id: {product.id}");
-                Console.WriteLine($"Title: {product.title}");
-                Console.WriteLine($"Price: {product.price}");
-                Console.WriteLine($"Description: {product.description}");
-                Console.WriteLine($"Category: {product.category}");
-                Console.WriteLine($"Image: {product.image}");
+                Console.WriteLine($"id: {product.id}");
+                Console.WriteLine($"title: {product.title}");
+                Console.WriteLine($"price: {product.price}");
+                Console.WriteLine($"description: {product.description}");
+                Console.WriteLine($"category: {product.category}");
+                Console.WriteLine($"image: {product.image}");
                 Console.WriteLine();
             }
+
             Console.ReadLine();
-        }
+        }       
     }
 }

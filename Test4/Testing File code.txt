@@ -1,0 +1,208 @@
+ //static void PrintJsonObjects(string json)
+        //{
+        //    bool insideString = false;
+        //    int braceCount = 0;
+        //    string currentObject = string.Empty;
+
+        //    for (int i = 0; i < json.Length; i++)
+        //    {
+        //        if (json[i] == '"')
+        //        {
+        //            insideString = !insideString;
+        //        }
+
+        //        // Start capturing the object when we find an opening brace and are not inside a string
+        //        if (json[i] == '{' && !insideString)
+        //        {
+        //            braceCount++;
+        //            currentObject += json[i];  // Start the new object
+        //        }
+        //        else if (json[i] == '}' && !insideString)
+        //        {
+        //            currentObject += json[i];  // Add closing brace
+        //            braceCount--;
+
+        //            // If we finished one object, print it as text
+        //            if (braceCount == 0)
+        //            {
+        //                PrintAsText(currentObject);
+        //                Console.WriteLine();  // Print a new line for better readability
+        //                currentObject = string.Empty;  // Reset for the next object
+        //            }
+        //        }
+        //        else if (braceCount > 0) // If we are inside an object
+        //        {
+        //            currentObject += json[i];  // Add character to current object
+        //        }
+        //    }
+        //}
+
+        //// Generic method to print the JSON object as text
+        //static void PrintAsText(string jsonObject)
+        //{
+        //    // Remove the braces and split by comma
+        //    jsonObject = jsonObject.Trim('{', '}');
+        //    string[] keyValuePairs = jsonObject.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+        //    foreach (var pair in keyValuePairs)
+        //    {
+        //        // Split the pair by the first colon encountered
+        //        int colonIndex = pair.IndexOf(':');
+        //        if (colonIndex >= 0)
+        //        {
+        //            string key = pair.Substring(0, colonIndex).Trim().Trim('"');
+        //            string value = pair.Substring(colonIndex + 1).Trim().Trim('"');
+
+        //            // Output the key-value pair
+        //            Console.WriteLine($"{key}: {value}");
+        //        }
+        //    }
+        //}
+
+        //static void Main(string[] args)
+        //{
+        //    string path = @"D:\DotNetTeamBackup\Durgesh\MAUI Learning\JSON_Parser\JsonParser\Test4\test2.json";
+        //    string json = File.ReadAllText(path);
+        //    PrintJsonObjects(json);
+
+        //    //JsonParser parser = new JsonParser();
+        //    //var products = parser.Parse<Product>(json);
+        //    //Console.WriteLine($"Total Products Parsed: {products.Count}");
+        //    //JsonParser parser = new JsonParser();
+        //    //List<Walk> walksList = parser.Parse<Walk>(walksJson);
+
+        //    //foreach (var product in products)
+        //    //{
+        //    //    Console.WriteLine($"id: {product.id}");
+        //    //    Console.WriteLine($"title: {product.title}");
+        //    //    Console.WriteLine($"price: {product.price}");
+        //    //    Console.WriteLine($"description: {product.description}");
+        //    //    Console.WriteLine($"category: {product.category}");
+        //    //    Console.WriteLine($"image: {product.image}");
+        //    //    Console.WriteLine();
+        //    //}
+        //    Console.ReadLine();
+        //}
+        //static void PrintJsonObjects(string json)
+        //{
+        //    bool insideString = false;
+        //    int braceCount = 0;
+        //    string currentObject = string.Empty;
+
+        //    for (int i = 0; i < json.Length; i++)
+        //    {
+        //        if (json[i] == '"')
+        //        {
+        //            insideString = !insideString;
+        //        }
+
+        //        // Start capturing the object when we find an opening brace and are not inside a string
+        //        if (json[i] == '{' && !insideString)
+        //        {
+        //            braceCount++;
+        //            currentObject += json[i];  // Start the new object
+        //        }
+        //        else if (json[i] == '}' && !insideString)
+        //        {
+        //            currentObject += json[i];  // Add closing brace
+        //            braceCount--;
+
+        //            // If we finished one object, print it as text
+        //            if (braceCount == 0)
+        //            {
+        //                PrintAsText(currentObject);
+        //                Console.WriteLine();  // Print a new line for better readability
+        //                currentObject = string.Empty;  // Reset for the next object
+        //            }
+        //        }
+        //        else if (braceCount > 0) // If we are inside an object
+        //        {
+        //            currentObject += json[i];  // Add character to current object
+        //        }
+        //    }
+        //}
+
+        //// Method to print the JSON object as text
+        //static void PrintAsText(string jsonObject)
+        //{
+        //    // Remove the braces and split by comma
+        //    jsonObject = jsonObject.Trim('{', '}');
+        //    string[] keyValuePairs = jsonObject.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+        //    foreach (var pair in keyValuePairs)
+        //    {
+        //        // Split the pair by the first colon encountered
+        //        int colonIndex = pair.IndexOf(':');
+        //        if (colonIndex >= 0)
+        //        {
+        //            string key = pair.Substring(0, colonIndex).Trim().Trim('"');
+        //            string value = pair.Substring(colonIndex + 1).Trim().Trim('"');
+
+        //            // Output the key-value pair
+        //            Console.WriteLine($"{key}: {value}");
+        //        }
+        //    }
+        //}
+
+
+        //static void PrintJsonObjects(string json)
+        //{
+        //    bool insideString = false;
+        //    int braceCount = 0;
+        //    string currentObject = string.Empty;
+
+        //    for (int i = 0; i < json.Length; i++)
+        //    {                
+        //        if (json[i] == '"')
+        //        {
+        //            insideString = !insideString;
+        //        }
+
+        //        // Start capturing the object when we find an opening brace and are not inside a string
+        //        if (json[i] == '{' && !insideString)
+        //        {
+        //            braceCount++;
+        //            currentObject += json[i];  // Start the new object
+        //        }
+        //        else if (json[i] == '}' && !insideString)
+        //        {
+        //            currentObject += json[i];  // Add closing brace
+        //            braceCount--;
+
+        //            // If we finished one object, print it
+        //            if (braceCount == 0)
+        //            {
+        //                Console.WriteLine(currentObject);
+        //                Console.WriteLine();  // Print a new line for better readability
+        //                currentObject = string.Empty;  // Reset for the next object
+        //            }
+        //        }
+        //        else if (braceCount > 0) // If we are inside an object
+        //        {
+        //            currentObject += json[i];  // Add character to current object
+        //        }
+        //    }
+        //}
+
+        //static int CountJsonObjects(string json)
+        //{
+        //    int count = 0;
+        //    bool insideString = false;
+
+        //    for (int i = 0; i < json.Length; i++)
+        //    {
+        //        // Toggle the insideString flag when encountering a double quote
+        //        if (json[i] == '"')
+        //        {
+        //            insideString = !insideString;
+        //        }
+
+        //        // Count the opening brace if we're not inside a string
+        //        if (json[i] == '{' && !insideString)
+        //        {
+        //            count++;
+        //        }
+        //    }
+
+        //    return count;
+        //}
