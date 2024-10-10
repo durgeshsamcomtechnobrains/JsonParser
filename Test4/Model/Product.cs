@@ -14,6 +14,7 @@ namespace Test4.Model
         public string description { get; set; }
         public string category { get; set; }
         public string image { get; set; }
+        public rating rating { get; set; }
     }
 
 }
