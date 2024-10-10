@@ -6,50 +6,23 @@ namespace Test4
     {
         static void Main(string[] args)
         {
-        //    string json = @"
-        //{
-        //    ""walks"": [
-        //        {
-        //            ""id"": 1,
-        //            ""name"": ""River Walk"",
-        //            ""distance"": 5.5,
-        //            ""duration"": ""2 hours"",
-        //            ""difficulty"": ""Easy"",
-        //            ""description"": ""A scenic walk along the river with beautiful views.""
-        //        },
-        //        {
-        //            ""id"": 2,
-        //            ""name"": ""Mountain Trail"",
-        //            ""distance"": 10.2,
-        //            ""duration"": ""4 hours"",
-        //            ""difficulty"": ""Moderate"",
-        //            ""description"": ""A challenging trail through the mountains.""
-        //        },
-        //        {
-        //            ""id"": 3,
-        //            ""name"": ""Forest Loop"",
-        //            ""distance"": 3.8,
-        //            ""duration"": ""1 hour"",
-        //            ""difficulty"": ""Easy"",
-        //            ""description"": ""A peaceful walk through the forest.""
-        //        }
-        //    ]
-        //}";
-            string path = @"D:\DotNetTeamBackup\Durgesh\MAUI Learning\JSON_Parser\JsonParser\Test3\test.json";
+            string path = @"D:\DotNetTeamBackup\Durgesh\MAUI Learning\JSON_Parser\JsonParser\Test4\test2.json";
             string json = File.ReadAllText(path);
+            JsonParser parser = new JsonParser();
+            var products = parser.Parse<Product>(json);
 
             var walksJson = json.Substring(json.IndexOf("\"walks\":") + "\"walks\":".Length).Trim();
-            JsonParser parser = new JsonParser();
-            List<Walk> walksList = parser.Parse<Walk>(walksJson);            
+            //JsonParser parser = new JsonParser();
+            //List<Walk> walksList = parser.Parse<Walk>(walksJson);            
 
-            foreach (var walk in walksList)
+            foreach (var product in products)
             {
-                Console.WriteLine($"Id: {walk.Id}");
-                Console.WriteLine($"Name: {walk.Name}");
-                Console.WriteLine($"Distance: {walk.Distance}");
-                Console.WriteLine($"Duration: {walk.Duration}");
-                Console.WriteLine($"Difficulty: {walk.Difficulty}");
-                Console.WriteLine($"Description: {walk.Description}");
+                Console.WriteLine($"Id: {product.id}");
+                Console.WriteLine($"Title: {product.title}");
+                Console.WriteLine($"Price: {product.price}");
+                Console.WriteLine($"Description: {product.description}");
+                Console.WriteLine($"Category: {product.category}");
+                Console.WriteLine($"Description: {product.image}");
                 Console.WriteLine();
             }
             Console.ReadLine();
