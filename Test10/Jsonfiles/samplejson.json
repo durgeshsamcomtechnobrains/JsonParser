@@ -1,0 +1,41 @@
+[
+  {
+    "pid": 1,
+    "name": "Product 1",
+    "description": "<ol><li>Lorem ipsum dolor sit amet, consectetuer adipiscing elit.</li><li>Aliquam tincidunt [100.87] mauris eu risus.</li><li>Vestibulum {Now DO} auctor dapibus neque.</li></ol>",
+    "price": "12.59",
+    "currency": "USD",
+    "colors": [
+      "Blue",
+      "Yealow",
+      "Green"
+    ],
+    "specification": [
+      {
+        "specid": "11",
+        "name": "Spec 1",
+        "desciption": "Specification description that contains everything regrading product "
+      },
+      {
+        "specid": "12",
+        "name": "Spec 2",
+        "desciption": "Specification description that contains everything regrading product "
+      },
+      {
+        "specid": "13",
+        "name": "Spec 3",
+        "desciption": "Specification description that contains everything regrading product "
+      },
+      {
+        "specid": "14",
+        "name": "Spec 4",
+        "desciption": "Specification description that contains everything regrading product "
+      }
+    ],
+    "gst": "18%",
+    "city": {
+      "name": "Ahmedabad",
+      "postal_code": "380007"
+    }
+  }
+]
