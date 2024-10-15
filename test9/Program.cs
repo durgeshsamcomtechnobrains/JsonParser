@@ -1,42 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using test9;
 using Test9;
 using Test9.Model;
-
+    
 class Program
 {
     static void Main()
     {
         string path = @"D:\DotNetTeamBackup\Durgesh\MAUI Learning\JSON_Parser\JsonParser\test9\Jsonfiles\samplejson.json";
-        string jsonread = File.ReadAllText(path);
-        Console.WriteLine(jsonread);
-
-
-        //Assuming the JSON is an array of products
-        //List<Product> products = NewJsonhead.Deserialize<List<Product>>(jsonread);
-
-        //foreach (var product in products)
-        //{
-        //    Console.WriteLine($"Id: {product.id}");
-        //    Console.WriteLine($"Title: {product.title}");
-        //    Console.WriteLine($"Price: {product.price}");
-        //    Console.WriteLine($"Description: {product.description}");
-        //    Console.WriteLine($"Category: {product.category}");
-        //    Console.WriteLine($"Image: {product.image}");
-
-        //    if (product.colors != null && product.colors.Length > 0)
-        //    {
-        //        Console.WriteLine($"Colors: {string.Join(", ", product.colors)}");
-        //    }
-        //    else
-        //    {
-        //        Console.WriteLine("Colors: None");
-        //    }
-        //    Console.WriteLine();
-        //}
-
+        string jsonread = File.ReadAllText(path);                
         List<Product2> products = NewJsonhead.Deserialize<List<Product2>>(jsonread);
+        //List<Product2> products = Test9JsonParse.Deserialize<List<Product2>>(jsonread);
         foreach (var product in products)
         {
             Console.WriteLine($"Id: {product.Pid}"); // Updated property

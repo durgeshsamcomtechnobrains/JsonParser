@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 
 public class JsonParser
-{
+{    
     public List<T> Deserialize<T>(string json)
     {
         // Remove surrounding brackets for array

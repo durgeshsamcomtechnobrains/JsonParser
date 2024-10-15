@@ -110,7 +110,7 @@ namespace Test9
         /// <returns>
         /// An instance of an object representing the input data.
         /// </returns>
-        public static object Deserialize(string text, Type targetType = null, JsonOptions options = null)
+        public static object Deserialize(string text, Type targetType = null, JsonOptions options = null) //2
         {
             if (text == null)
             {
@@ -149,7 +149,7 @@ namespace Test9
         /// <returns>
         /// An instance of an object representing the input data.
         /// </returns>
-        public static T Deserialize<T>(string text, JsonOptions options = null) => (T)Deserialize(text, typeof(T), options);
+        public static T Deserialize<T>(string text, JsonOptions options = null) => (T)Deserialize(text, typeof(T), options);//1
 
         /// <summary>
         /// Deserializes an object from the specified TextReader.
@@ -160,7 +160,7 @@ namespace Test9
         /// <returns>
         /// An instance of an object representing the input data.
         /// </returns>
-        public static object Deserialize(TextReader reader, Type targetType = null, JsonOptions options = null)
+        public static object Deserialize(TextReader reader, Type targetType = null, JsonOptions options = null) //3
         {
             if (reader == null)
                 throw new ArgumentNullException(nameof(reader));
@@ -885,7 +885,7 @@ namespace Test9
             return Conversions.ChangeType(value, conversionType, null, null);
         }
 
-        private static object[] ReadArray(TextReader reader, JsonOptions options)
+        private static object[] ReadArray(TextReader reader, JsonOptions options)//7
         {
             if (!ReadWhitespaces(reader))
                 return null;
@@ -972,7 +972,7 @@ namespace Test9
             return -1;
         }
 
-        private static Dictionary<string, object> ReadDictionary(TextReader reader, JsonOptions options)
+        private static Dictionary<string, object> ReadDictionary(TextReader reader, JsonOptions options)//9
         {
             if (!ReadWhitespaces(reader))
                 return null;
@@ -1030,7 +1030,7 @@ namespace Test9
             while (true);
         }
 
-        private static string ReadString(TextReader reader, JsonOptions options)
+        private static string ReadString(TextReader reader, JsonOptions options)//10
         {
             var sb = new StringBuilder();
             do
@@ -1139,8 +1139,8 @@ namespace Test9
         }
 #endif
 
-        private static object ReadValue(TextReader reader, JsonOptions options) => ReadValue(reader, options, false, out var _);
-        private static object ReadValue(TextReader reader, JsonOptions options, bool arrayMode, out bool arrayEnd)
+        private static object ReadValue(TextReader reader, JsonOptions options) => ReadValue(reader, options, false, out var _);//5
+        private static object ReadValue(TextReader reader, JsonOptions options, bool arrayMode, out bool arrayEnd)//6
         {
             arrayEnd = false;
             // 1st chance type is determined by format
@@ -1261,7 +1261,7 @@ namespace Test9
             return null;
         }
 
-        private static object ReadNumberOrLiteral(TextReader reader, JsonOptions options, out bool arrayEnd)
+        private static object ReadNumberOrLiteral(TextReader reader, JsonOptions options, out bool arrayEnd)//12
         {
             arrayEnd = false;
             var sb = new StringBuilder();
@@ -1371,7 +1371,7 @@ namespace Test9
         /// <returns>
         /// true if the text was converted successfully; otherwise, false.
         /// </returns>
-        public static bool TryParseDateTime(string text, DateTimeStyles styles, out DateTime dt)
+        public static bool TryParseDateTime(string text, DateTimeStyles styles, out DateTime dt)//12
         {
             dt = DateTime.MinValue;
             if (text == null)
@@ -1603,8 +1603,8 @@ namespace Test9
             return (ushort)u;
         }
 
-        private static bool ReadWhitespaces(TextReader reader) => ReadWhile(reader, char.IsWhiteSpace);
-        private static bool ReadWhile(TextReader reader, Predicate<char> cont)
+        private static bool ReadWhitespaces(TextReader reader) => ReadWhile(reader, char.IsWhiteSpace);//8
+        private static bool ReadWhile(TextReader reader, Predicate<char> cont)//9
         {
             do
             {
@@ -4920,7 +4920,7 @@ namespace Test9
     /// <summary>
     /// Define options for JSON.
     /// </summary>
-    public class JsonOptions
+    public class JsonOptions //4
     {
         private readonly List<Exception> _exceptions = new List<Exception>();
         internal static DateTimeStyles _defaultDateTimeStyles = DateTimeStyles.AssumeUniversal | DateTimeStyles.AllowInnerWhite | DateTimeStyles.AllowLeadingWhite | DateTimeStyles.AllowTrailingWhite | DateTimeStyles.AllowWhiteSpaces;
