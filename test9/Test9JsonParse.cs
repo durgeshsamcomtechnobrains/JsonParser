@@ -40,8 +40,8 @@ namespace test9
 
         private static readonly string[] _dateFormatsUtc = { "yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'", "yyyy'-'MM'-'dd'T'HH':'mm':'ss'Z'", "yyyy'-'MM'-'dd'T'HH':'mm'Z'", "yyyyMMdd'T'HH':'mm':'ss'Z'" };
         private static readonly DateTime _minDateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        private static readonly long _minDateTimeTicks = _minDateTime.Ticks;        
-        
+        private static readonly long _minDateTimeTicks = _minDateTime.Ticks;
+
         public static T Deserialize<T>(string text, JsonOptions options = null) => (T)Deserialize(text, typeof(T), options);//1
 
         public static object Deserialize(string text, Type targetType = null, JsonOptions options = null) //2
@@ -85,7 +85,7 @@ namespace test9
         }
 
         private static object ReadValue(TextReader reader, JsonOptions options) => ReadValue(reader, options, false, out var _);//5
-        
+
         private static object ReadValue(TextReader reader, JsonOptions options, bool arrayMode, out bool arrayEnd)//6
         {
             arrayEnd = false;
@@ -648,8 +648,8 @@ namespace test9
             }
             return null;
         }
-       
-        private static void Apply(IDictionary dictionary, object target, JsonOptions options)
+
+        private static void Apply(IDictionary dictionary, object target, JsonOptions options) //A
         {
             if (dictionary == null || target == null)
                 return;
@@ -674,7 +674,7 @@ namespace test9
                 return;
             }
 
-           // var def = TypeDef.Get(target.GetType(), options);
+            var def = TypeDef.Get(target.GetType(), options);
 
             foreach (DictionaryEntry entry in dictionary)
             {
@@ -702,10 +702,9 @@ namespace test9
                     entryValue = e.Value;
                 }
 
-                //def.ApplyEntry(dictionary, target, entryKey, entryValue, options);
+                def.ApplyEntry(dictionary, target, entryKey, entryValue, options); //B
             }
         }
-
         public static object ChangeType(object target, object value, Type conversionType, JsonOptions options = null)
         {
             if (conversionType == null)
@@ -862,7 +861,7 @@ namespace test9
             }
 
             return value;
-        }        
+        }
 
         public static bool TryChangeType(object input, Type conversionType, IFormatProvider provider, out object value)
         {
@@ -904,7 +903,7 @@ namespace test9
             {
                 value = input;
                 return true;
-            }           
+            }
 
             if (inputType.IsEnum)
             {
@@ -1248,8 +1247,8 @@ namespace test9
             {
                 if (IntPtr.Size == 8)
                 {
-                    
-                }                
+
+                }
                 return false;
             }
 
@@ -1522,7 +1521,7 @@ namespace test9
                 {
                     value = ((DateTimeOffset)value).TimeOfDay;
                     return true;
-                }               
+                }
             }
 
             var isGenericList = IsGenericList(conversionType, out var elementType);
@@ -1616,7 +1615,7 @@ namespace test9
                 {
                     value = b;
                     return true;
-                }               
+                }
                 return false;
             }
 
@@ -1710,7 +1709,7 @@ namespace test9
             return false;
         }
 
-        private static bool IsValid(DateTime dt) => dt != DateTime.MinValue && dt != DateTime.MaxValue && dt.Kind != DateTimeKind.Unspecified;        
+        private static bool IsValid(DateTime dt) => dt != DateTime.MinValue && dt != DateTime.MaxValue && dt.Kind != DateTimeKind.Unspecified;
 
         public static bool IsGenericList(Type type, out Type elementType)
         {
@@ -1734,6 +1733,7 @@ namespace test9
 
             return type.IsValueType && !IsNullable(type);
         }
+
         public static bool IsNullable(Type type)
         {
             if (type == null)
@@ -1841,7 +1841,7 @@ namespace test9
             }
             return typeof(object);
         }
-   
+
 
         public static bool TryParseDateTime(string text, DateTimeStyles styles, out DateTime dt)//12
         {
@@ -2023,6 +2023,609 @@ namespace test9
             return DateTime.TryParse(text, null, styles, out dt);
         }
 
+        private static JsonAttribute GetJsonAttribute(MemberInfo pi)
+        {
+            var atts = pi.GetCustomAttributes(true);
+            if (atts == null || atts.Length == 0)
+                return null;
+
+            foreach (var obj in atts)
+            {
+                if (!(obj is Attribute att))
+                    continue;
+
+                if (att is JsonAttribute xatt)
+                    return xatt;
+
+            }
+            return null;
+        }
+
+
+
+        public interface IMemberAccessor
+        {
+            object Get(object component);
+            void Set(object component, object value);
+        }
+
+        public class MemberDefinition
+        {
+            private string _name;
+            private string _wireName;
+            private string _escapedWireName;
+            private IMemberAccessor _accessor;
+            private Type _type;
+
+            public virtual bool HasDefaultValue { get; set; }
+            public virtual object DefaultValue { get; set; }
+            public virtual string Name
+            {
+                get => _name;
+                set
+                {
+                    if (string.IsNullOrEmpty(value))
+                        throw new ArgumentException(null, nameof(value));
+
+                    _name = value;
+                }
+            }
+
+            public virtual string EscapedWireName
+            {
+                get => _escapedWireName;
+                set
+                {
+                    if (string.IsNullOrEmpty(value))
+                        throw new ArgumentException(null, nameof(value));
+
+                    _escapedWireName = value;
+                }
+            }
+
+            public virtual string WireName
+            {
+                get => _wireName;
+                set
+                {
+                    if (string.IsNullOrEmpty(value))
+                        throw new ArgumentException(null, nameof(value));
+
+                    _wireName = value;
+                }
+            }
+
+            public virtual Type Type
+            {
+                get => _type;
+                set => _type = value ?? throw new ArgumentNullException(nameof(value));
+            }
+
+            public virtual IMemberAccessor Accessor
+            {
+                get => _accessor;
+                set => _accessor = value ?? throw new ArgumentNullException(nameof(value));
+            }
+
+            public virtual object GetOrCreateInstance(object target, int elementsCount, JsonOptions options = null)
+            {
+                object targetValue;
+                if (options.SerializationOptions.HasFlag(JsonSerializationOptions.ContinueOnValueError))
+                {
+                    try
+                    {
+                        targetValue = Accessor.Get(target);
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
+                else
+                {
+                    targetValue = Accessor.Get(target);
+                }
+
+                if (targetValue == null || (targetValue is Array array && array.GetLength(0) < elementsCount))
+                {
+                    targetValue = CreateInstance(target, Type, elementsCount, options, targetValue);
+                    if (targetValue != null)
+                    {
+                        Accessor.Set(target, targetValue);
+                    }
+                }
+                return targetValue;
+            }
+
+            public virtual void ApplyEntry(IDictionary dictionary, object target, string key, object value, JsonOptions options = null)
+            {
+                if (options.ApplyEntryCallback != null)
+                {
+                    var og = new Dictionary<object, object>
+                    {
+                        ["dictionary"] = dictionary,
+                        ["member"] = this
+                    };
+
+                    var e = new JsonEventArgs(null, value, og, options, key, target)
+                    {
+                        EventType = JsonEventType.ApplyEntry
+                    };
+                    options.ApplyEntryCallback(e);
+                    if (e.Handled)
+                        return;
+
+                    value = e.Value;
+                }
+
+                if (value is IDictionary dic)
+                {
+                    var targetValue = GetOrCreateInstance(target, dic.Count, options);
+                    Apply(dic, targetValue, options);
+                    return;
+
+                }
+
+                var lo = GetListObject(Type, options, target, value, dictionary, key);
+                if (lo != null)
+                {
+                    if (value is IEnumerable enumerable)
+                    {
+                        lo.List = GetOrCreateInstance(target, enumerable is ICollection coll ? coll.Count : 0, options);
+                        ApplyToListTarget(target, enumerable, lo, options);
+                        return;
+                    }
+                }
+
+
+                var cvalue = ChangeType(target, value, Type, options);
+                Accessor.Set(target, cvalue);
+            }
+
+        }
+
+
+        private sealed class TypeDef
+        {
+            private static readonly Dictionary<string, TypeDef> _defs = new Dictionary<string, TypeDef>();
+            private static readonly object _lock = new object();
+            private readonly List<MemberDefinition> _serializationMembers = new List<MemberDefinition>();
+            private readonly List<MemberDefinition> _deserializationMembers = new List<MemberDefinition>();
+            private readonly Type _type;
+
+
+            private MemberDefinition GetDeserializationMember(string key)
+            {
+                if (key == null)
+                    return null;
+
+                foreach (var def in _deserializationMembers)
+                {
+                    if (string.Compare(def.WireName, key, StringComparison.OrdinalIgnoreCase) == 0)
+                        return def;
+                }
+                return null;
+            }
+
+            public void ApplyEntry(IDictionary dictionary, object target, string key, object value, JsonOptions options) //appply values
+            {
+                var member = GetDeserializationMember(key);
+                if (member == null)
+                    return;
+
+                member.ApplyEntry(dictionary, target, key, value, options);
+            }
+
+
+            private TypeDef(Type type, JsonOptions options)
+            {
+                _type = type;
+                IEnumerable<MemberDefinition> members;
+                if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseReflection))
+                {
+                    members = EnumerateDefinitionsUsingReflection(true, type, options);
+                }
+                else
+                {
+                    members = EnumerateDefinitionsUsingTypeDescriptors(true, type, options);
+                }
+                _serializationMembers = new List<MemberDefinition>(options.FinalizeSerializationMembers(type, members));
+
+                if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseReflection))
+                {
+                    members = EnumerateDefinitionsUsingReflection(false, type, options);
+                }
+                else
+                {
+                    members = EnumerateDefinitionsUsingTypeDescriptors(false, type, options);
+                }
+                _deserializationMembers = new List<MemberDefinition>(options.FinalizeDeserializationMembers(type, members));
+            }
+
+
+            private static string GetKey(Type type, JsonOptions options) => type.AssemblyQualifiedName + '\0' + options.GetCacheKey();
+            public static TypeDef Get(Type type, JsonOptions options)
+            {
+                lock (_lock)
+                {
+                    return UnlockedGet(type, options);
+                }
+            }
+            private static TypeDef UnlockedGet(Type type, JsonOptions options)
+            {
+                var key = GetKey(type, options);
+                if (!_defs.TryGetValue(key, out var ta))
+                {
+                    ta = new TypeDef(type, options);
+                    _defs.Add(key, ta);
+                }
+                return ta;
+            }
+
+            private static bool HasScriptIgnore(PropertyDescriptor pd)
+            {
+                if (pd.Attributes == null)
+                    return false;
+
+                foreach (var att in pd.Attributes)
+                {
+                    if (att.GetType().Name == null)
+                        continue;
+
+                    if (att.GetType().Name.StartsWith(_scriptIgnore))
+                        return true;
+                }
+                return false;
+            }
+
+            private static string GetObjectName(MemberInfo mi, string defaultName)
+            {
+                var atts = mi.GetCustomAttributes(true);
+                if (atts != null)
+                {
+                    foreach (var att in atts.Cast<Attribute>())
+                    {
+                        var name = GetObjectName(att);
+                        if (name != null)
+                            return name;
+                    }
+                }
+                return defaultName;
+            }
+
+            private static string GetObjectName(Attribute att)
+            {
+                if (att is JsonAttribute jsa && !string.IsNullOrEmpty(jsa.Name))
+                    return jsa.Name;
+
+                if (att is XmlAttributeAttribute xaa && !string.IsNullOrEmpty(xaa.AttributeName))
+                    return xaa.AttributeName;
+
+                if (att is XmlElementAttribute xea && !string.IsNullOrEmpty(xea.ElementName))
+                    return xea.ElementName;
+
+                return null;
+            }
+            
+            private static void AppendCharAsUnicode(StringBuilder sb, char c)
+            {
+                sb.Append('\\');
+                sb.Append('u');
+                sb.AppendFormat(CultureInfo.InvariantCulture, _x4Format, (ushort)c);
+            }
+            
+            public static string EscapeString(string value)
+            {
+                if (string.IsNullOrEmpty(value))
+                    return null;
+
+                StringBuilder builder = null;
+                var startIndex = 0;
+                var count = 0;
+                for (var i = 0; i < value.Length; i++)
+                {
+                    var c = value[i];
+                    if ((c == '\r') ||
+                        (c == '\t') ||
+                        (c == '"') ||
+                        (c == '\'') ||
+                        (c == '<') ||
+                        (c == '>') ||
+                        (c == '\\') ||
+                        (c == '\n') ||
+                        (c == '\b') ||
+                        (c == '\f') ||
+                        (c < ' '))
+                    {
+                        if (builder == null)
+                        {
+                            builder = new StringBuilder(value.Length + 5);
+                        }
+
+                        if (count > 0)
+                        {
+                            builder.Append(value, startIndex, count);
+                        }
+                        startIndex = i + 1;
+                        count = 0;
+                    }
+
+                    switch (c)
+                    {
+                        case '<':
+                        case '>':
+                        case '\'':
+                            AppendCharAsUnicode(builder, c);
+                            continue;
+
+                        case '\\':
+                            builder.Append(@"\\");
+                            continue;
+
+                        case '\b':
+                            builder.Append(@"\b");
+                            continue;
+
+                        case '\t':
+                            builder.Append(@"\t");
+                            continue;
+
+                        case '\n':
+                            builder.Append(@"\n");
+                            continue;
+
+                        case '\f':
+                            builder.Append(@"\f");
+                            continue;
+
+                        case '\r':
+                            builder.Append(@"\r");
+                            continue;
+
+                        case '"':
+                            builder.Append("\\\"");
+                            continue;
+                    }
+
+                    if (c < ' ')
+                    {
+                        AppendCharAsUnicode(builder, c);
+                    }
+                    else
+                    {
+                        count++;
+                    }
+                }
+
+                if (builder == null)
+                    return value;
+
+                if (count > 0)
+                {
+                    builder.Append(value, startIndex, count);
+                }
+                return builder.ToString();
+            }
+
+            private static IEnumerable<MemberDefinition> EnumerateDefinitionsUsingReflection(bool serialization, Type type, JsonOptions options)
+            {
+                foreach (var info in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                {
+                    if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseJsonAttribute))
+                    {
+                        var ja = GetJsonAttribute(info);
+                        if (ja != null)
+                        {
+                            if (serialization && ja.IgnoreWhenSerializing)
+                                continue;
+
+                            if (!serialization && ja.IgnoreWhenDeserializing)
+                                continue;
+                        }
+                    }
+
+                    if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseXmlIgnore))
+                    {
+                        if (info.IsDefined(typeof(XmlIgnoreAttribute), true))
+                            continue;
+                    }
+
+                    if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseScriptIgnore))
+                    {
+                        if (HasScriptIgnore(info))
+                            continue;
+                    }
+
+                    if (serialization)
+                    {
+                        if (!info.CanRead)
+                            continue;
+
+                        var getMethod = info.GetGetMethod();
+                        if (getMethod == null || getMethod.GetParameters().Length > 0)
+                            continue;
+                    }
+                    // else we don't test the set method, as some properties can still be deserialized (collections)
+
+                    var name = GetObjectName(info, info.Name);
+
+                    var ma = new MemberDefinition
+                    {
+                        Type = info.PropertyType,
+                        Name = info.Name
+                    };
+                    if (serialization)
+                    {
+                        ma.WireName = name;
+                        ma.EscapedWireName = EscapeString(name);
+                    }
+                    else
+                    {
+                        ma.WireName = name;
+                    }
+
+                    ma.HasDefaultValue = TryGetObjectDefaultValue(info, out var defaultValue);
+                    ma.DefaultValue = defaultValue;
+                    ma.Accessor = (IMemberAccessor)Activator.CreateInstance(typeof(PropertyInfoAccessor<,>).MakeGenericType(info.DeclaringType, info.PropertyType), info);
+                    yield return ma;
+                }
+
+                if (options.SerializationOptions.HasFlag(JsonSerializationOptions.SerializeFields))
+                {
+                    foreach (var info in type.GetFields(BindingFlags.Public | BindingFlags.Instance))
+                    {
+                        if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseJsonAttribute))
+                        {
+                            var ja = GetJsonAttribute(info);
+                            if (ja != null)
+                            {
+                                if (serialization && ja.IgnoreWhenSerializing)
+                                    continue;
+
+                                if (!serialization && ja.IgnoreWhenDeserializing)
+                                    continue;
+                            }
+                        }
+
+                        if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseXmlIgnore))
+                        {
+                            if (info.IsDefined(typeof(XmlIgnoreAttribute), true))
+                                continue;
+                        }
+
+                        if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseScriptIgnore))
+                        {
+                            if (HasScriptIgnore(info))
+                                continue;
+                        }
+
+                        var name = GetObjectName(info, info.Name);
+
+                        var ma = new MemberDefinition
+                        {
+                            Type = info.FieldType,
+                            Name = info.Name
+                        };
+                        if (serialization)
+                        {
+                            ma.WireName = name;
+                            ma.EscapedWireName = EscapeString(name);
+                        }
+                        else
+                        {
+                            ma.WireName = name;
+                        }
+
+                        ma.HasDefaultValue = TryGetObjectDefaultValue(info, out var defaultValue);
+                        ma.DefaultValue = defaultValue;
+                        ma.Accessor = (IMemberAccessor)Activator.CreateInstance(typeof(FieldInfoAccessor), info);
+                        yield return ma;
+                    }
+                }
+            }
+            private static bool TryGetObjectDefaultValue(MemberInfo mi, out object value)
+            {
+                var atts = mi.GetCustomAttributes(true);
+                if (atts != null)
+                {
+                    foreach (var att in atts.Cast<Attribute>())
+                    {
+                        if (TryGetObjectDefaultValue(att, out value))
+                            return true;
+                    }
+                }
+                value = null;
+                return false;
+            }
+
+            private static bool TryGetObjectDefaultValue(Attribute att, out object value)
+            {
+                if (att is JsonAttribute jsa && jsa.HasDefaultValue)
+                {
+                    value = jsa.DefaultValue;
+                    return true;
+                }
+
+                if (att is DefaultValueAttribute dva)
+                {
+                    value = dva.Value;
+                    return true;
+                }
+
+                value = null;
+                return false;
+            }
+
+            private static IEnumerable<MemberDefinition> EnumerateDefinitionsUsingTypeDescriptors(bool serialization, Type type, JsonOptions options)
+            {
+                foreach (var descriptor in TypeDescriptor.GetProperties(type).Cast<PropertyDescriptor>())
+                {
+                    if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseJsonAttribute))
+                    {
+                        var ja = descriptor.GetAttribute<JsonAttribute>();
+                        if (ja != null)
+                        {
+                            if (serialization && ja.IgnoreWhenSerializing)
+                                continue;
+
+                            if (!serialization && ja.IgnoreWhenDeserializing)
+                                continue;
+                        }
+                    }
+
+                    if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseXmlIgnore))
+                    {
+                        if (descriptor.GetAttribute<XmlIgnoreAttribute>() != null)
+                            continue;
+                    }
+
+                    if (options.SerializationOptions.HasFlag(JsonSerializationOptions.UseScriptIgnore))
+                    {
+                        if (HasScriptIgnore(descriptor))
+                            continue;
+                    }
+
+                    if (options.SerializationOptions.HasFlag(JsonSerializationOptions.SkipGetOnly) && descriptor.IsReadOnly)
+                        continue;
+
+                    var name = GetObjectName(descriptor, descriptor.Name);
+
+                    var ma = new MemberDefinition
+                    {
+                        Type = descriptor.PropertyType,
+                        Name = descriptor.Name
+                    };
+                    if (serialization)
+                    {
+                        ma.WireName = name;
+                        ma.EscapedWireName = EscapeString(name);
+                    }
+                    else
+                    {
+                        ma.WireName = name;
+                    }
+
+                    ma.HasDefaultValue = TryGetObjectDefaultValue(descriptor, out var defaultValue);
+                    ma.DefaultValue = defaultValue;
+                    ma.Accessor = (IMemberAccessor)Activator.CreateInstance(typeof(PropertyDescriptorAccessor), descriptor);
+                    yield return ma;
+                }
+            }
+        }        
+
+        private static T GetAttribute<T>(this PropertyDescriptor descriptor) where T : Attribute => GetAttribute<T>(descriptor.Attributes);
+
+        private static T GetAttribute<T>(this AttributeCollection attributes) where T : Attribute
+        {
+            foreach (var att in attributes)
+            {
+                if (typeof(T).IsAssignableFrom(att.GetType()))
+                    return (T)att;
+            }
+            return null;
+        }
+
+
         private sealed class ICollectionTObject<T> : ListObject
         {
             private ICollection<T> _coll;
@@ -2046,6 +2649,25 @@ namespace test9
                 }
 
                 _coll.Add((T)value);
+            }
+        }
+
+        private sealed class PropertyDescriptorAccessor : IMemberAccessor
+        {
+            private readonly PropertyDescriptor _pd;
+
+            public PropertyDescriptorAccessor(PropertyDescriptor pd)
+            {
+                _pd = pd;
+            }
+
+            public object Get(object component) => _pd.GetValue(component);
+            public void Set(object component, object value)
+            {
+                if (_pd.IsReadOnly)
+                    return;
+
+                _pd.SetValue(component, value);
             }
         }
 
@@ -2073,6 +2695,79 @@ namespace test9
             public abstract void Clear();
             public abstract void Add(object value, JsonOptions options = null);
             public virtual IDictionary<string, object> Context => null;
+        }
+
+        private sealed class FieldInfoAccessor : IMemberAccessor
+        {
+            private readonly FieldInfo _fi;
+
+            public FieldInfoAccessor(FieldInfo fi)
+            {
+                _fi = fi;
+            }
+
+            public object Get(object component) => _fi.GetValue(component);
+            public void Set(object component, object value) => _fi.SetValue(component, value);
+        }
+
+        private delegate TResult JFunc<T, TResult>(T arg);
+        private delegate void JAction<T1, T2>(T1 arg1, T2 arg2);
+
+        private sealed class PropertyInfoAccessor<TComponent, TMember> : IMemberAccessor
+        {
+            private readonly JFunc<TComponent, TMember> _get;
+            private readonly JAction<TComponent, TMember> _set;
+
+            public PropertyInfoAccessor(PropertyInfo pi)
+            {
+                var get = pi.GetGetMethod();
+                if (get != null)
+                {
+                    _get = (JFunc<TComponent, TMember>)Delegate.CreateDelegate(typeof(JFunc<TComponent, TMember>), get);
+                }
+
+                var set = pi.GetSetMethod();
+                if (set != null)
+                {
+                    _set = (JAction<TComponent, TMember>)Delegate.CreateDelegate(typeof(JAction<TComponent, TMember>), set);
+                }
+            }
+
+            public object Get(object component)
+            {
+                if (_get == null)
+                    return null;
+
+                return _get((TComponent)component);
+            }
+
+            public void Set(object component, object value)
+            {
+                if (_set == null)
+                    return;
+
+                _set((TComponent)component, (TMember)value);
+            }
+        }
+
+
+        private static class Conversions
+        {
+            public static object ChangeType(object input, Type conversionType, object defaultValue = null, IFormatProvider provider = null)
+            {
+                if (!TryChangeType(input, conversionType, provider, out var value))
+                {
+                    if (TryChangeType(defaultValue, conversionType, provider, out var def))
+                        return def;
+
+                    if (IsReallyValueType(conversionType))
+                        return Activator.CreateInstance(conversionType);
+
+                    return null;
+                }
+
+                return value;
+            }
         }
     }
 
@@ -2142,7 +2837,7 @@ namespace test9
 
         public virtual Exception[] Exceptions => _exceptions.ToArray();
 
-        public virtual IEnumerable<NewJsonhead.MemberDefinition> FinalizeSerializationMembers(Type type, IEnumerable<NewJsonhead.MemberDefinition> members) => members;
+        public virtual IEnumerable<Test9JsonParse.MemberDefinition> FinalizeSerializationMembers(Type type, IEnumerable<Test9JsonParse.MemberDefinition> members) => members;
 
         /// <summary>
         /// Finalizes the deserialization members from an initial setup of members.
@@ -2150,7 +2845,7 @@ namespace test9
         /// <param name="type">The input type. May not be null.</param>
         /// <param name="members">The members. May not be null.</param>
         /// <returns>A non-null list of members.</returns>
-        public virtual IEnumerable<NewJsonhead.MemberDefinition> FinalizeDeserializationMembers(Type type, IEnumerable<NewJsonhead.MemberDefinition> members) => members;
+        public virtual IEnumerable<Test9JsonParse.MemberDefinition> FinalizeDeserializationMembers(Type type, IEnumerable<Test9JsonParse.MemberDefinition> members) => members;
 
         /// <summary>
         /// Gets or sets the serialization options.
@@ -2356,6 +3051,7 @@ namespace test9
             : base(message, innerException)
         {
         }
-    }    
+    }   
+    
 
 }

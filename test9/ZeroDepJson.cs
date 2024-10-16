@@ -397,9 +397,6 @@ namespace Test9
             return null;
         }
 
-        /// <summary>
-        /// Defines an object that handles list deserialization.
-        /// </summary>
         public abstract class ListObject
         {
             /// <summary>
@@ -654,7 +651,7 @@ namespace Test9
             return false;
         }
 
-        private static void Apply(IDictionary dictionary, object target, JsonOptions options)
+        private static void Apply(IDictionary dictionary, object target, JsonOptions options) //A
         {
             if (dictionary == null || target == null)
                 return;
@@ -707,7 +704,7 @@ namespace Test9
                     entryValue = e.Value;
                 }
 
-                def.ApplyEntry(dictionary, target, entryKey, entryValue, options);
+                def.ApplyEntry(dictionary, target, entryKey, entryValue, options); //B
             }
         }
 
@@ -790,7 +787,7 @@ namespace Test9
         /// <returns>
         /// An object of the target type whose value is equivalent to input value.
         /// </returns>
-        public static object ChangeType(object target, object value, Type conversionType, JsonOptions options = null)
+        public static object ChangeType(object target, object value, Type conversionType, JsonOptions options = null)//C
         {
             if (conversionType == null)
                 throw new ArgumentNullException(nameof(conversionType));
@@ -843,7 +840,7 @@ namespace Test9
                 return instance;
             }
 
-            if (conversionType == typeof(byte[]) && value is string str)
+            if (conversionType == typeof(byte[]) && value is string str) //D
             {
                 if (options.SerializationOptions.HasFlag(JsonSerializationOptions.ByteArrayAsBase64))
                 {
@@ -882,7 +879,7 @@ namespace Test9
                 }
             }
 
-            return Conversions.ChangeType(value, conversionType, null, null);
+            return Conversions.ChangeType(value, conversionType, null, null); //E
         }
 
         private static object[] ReadArray(TextReader reader, JsonOptions options)//7
@@ -3232,7 +3229,7 @@ namespace Test9
                 return null;
             }
 
-            public void ApplyEntry(IDictionary dictionary, object target, string key, object value, JsonOptions options)
+            public void ApplyEntry(IDictionary dictionary, object target, string key, object value, JsonOptions options) //appply values
             {
                 var member = GetDeserializationMember(key);
                 if (member == null)
@@ -3691,8 +3688,7 @@ namespace Test9
                 _pd.SetValue(component, value);
             }
         }
-
-        // note: Funcs & Action<T> needs .NET 4+
+        
         private delegate TResult JFunc<T, TResult>(T arg);
         private delegate void JAction<T1, T2>(T1 arg1, T2 arg2);
 
@@ -3761,7 +3757,7 @@ namespace Test9
                 return true;
             }
 
-            public static object ChangeType(object input, Type conversionType, object defaultValue = null, IFormatProvider provider = null)
+            public static object ChangeType(object input, Type conversionType, object defaultValue = null, IFormatProvider provider = null) //E
             {
                 if (!TryChangeType(input, conversionType, provider, out var value))
                 {
