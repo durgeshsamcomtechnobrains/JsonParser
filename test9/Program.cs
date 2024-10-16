@@ -11,8 +11,8 @@ class Program
     {
         string path = @"D:\DotNetTeamBackup\Durgesh\MAUI Learning\JSON_Parser\JsonParser\test9\Jsonfiles\samplejson.json";
         string jsonread = File.ReadAllText(path);                
-        List<Product2> products = NewJsonhead.Deserialize<List<Product2>>(jsonread);
-        //List<Product2> products = Test9JsonParse.Deserialize<List<Product2>>(jsonread);
+        //List<Product2> products = NewJsonhead.Deserialize<List<Product2>>(jsonread);
+        List<Product2> products = Test9JsonParse.Deserialize<List<Product2>>(jsonread);
         foreach (var product in products)
         {
             Console.WriteLine($"Id: {product.Pid}"); // Updated property

@@ -2041,8 +2041,6 @@ namespace test9
             return null;
         }
 
-
-
         public interface IMemberAccessor
         {
             object Get(object component);
@@ -2184,7 +2182,6 @@ namespace test9
 
         }
 
-
         private sealed class TypeDef
         {
             private static readonly Dictionary<string, TypeDef> _defs = new Dictionary<string, TypeDef>();
@@ -2276,6 +2273,39 @@ namespace test9
                         return true;
                 }
                 return false;
+            }
+
+            private static bool HasScriptIgnore(MemberInfo mi)
+            {
+                var atts = mi.GetCustomAttributes(true);
+                if (atts == null || atts.Length == 0)
+                    return false;
+
+                foreach (var obj in atts)
+                {
+#pragma warning disable IDE0083 // Use pattern matching
+                    if (!(obj is Attribute att))
+#pragma warning restore IDE0083 // Use pattern matching
+                        continue;
+
+                    if (att.GetType().Name == null)
+                        continue;
+
+                    if (att.GetType().Name.StartsWith(_scriptIgnore))
+                        return true;
+                }
+                return false;
+            }
+
+            private static string GetObjectName(PropertyDescriptor pd, string defaultName)
+            {
+                foreach (var att in pd.Attributes.Cast<Attribute>())
+                {
+                    var name = GetObjectName(att);
+                    if (name != null)
+                        return name;
+                }
+                return defaultName;
             }
 
             private static string GetObjectName(MemberInfo mi, string defaultName)
@@ -2523,6 +2553,19 @@ namespace test9
                     }
                 }
             }
+
+            private static bool TryGetObjectDefaultValue(PropertyDescriptor pd, out object value)
+            {
+                foreach (var att in pd.Attributes.Cast<Attribute>())
+                {
+                    if (TryGetObjectDefaultValue(att, out value))
+                        return true;
+                }
+
+                value = null;
+                return false;
+            }
+
             private static bool TryGetObjectDefaultValue(MemberInfo mi, out object value)
             {
                 var atts = mi.GetCustomAttributes(true);
@@ -2624,7 +2667,6 @@ namespace test9
             }
             return null;
         }
-
 
         private sealed class ICollectionTObject<T> : ListObject
         {
@@ -2750,7 +2792,6 @@ namespace test9
             }
         }
 
-
         private static class Conversions
         {
             public static object ChangeType(object input, Type conversionType, object defaultValue = null, IFormatProvider provider = null)
@@ -2778,9 +2819,6 @@ namespace test9
         private readonly List<Exception> _exceptions = new List<Exception>();
         internal static DateTimeStyles _defaultDateTimeStyles = DateTimeStyles.AssumeUniversal | DateTimeStyles.AllowInnerWhite | DateTimeStyles.AllowLeadingWhite | DateTimeStyles.AllowTrailingWhite | DateTimeStyles.AllowWhiteSpaces;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="JsonOptions" /> class.
-        /// </summary>
         public JsonOptions()
         {
             SerializationOptions = JsonSerializationOptions.Default;
